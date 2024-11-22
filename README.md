@@ -1,4 +1,4 @@
-### **My Journey with Apache APISIX: From Frustration to Success**
+#### **My Journey with Apache APISIX: From Frustration to Success**
 
 When I began my search for a reliable open-source API gateway, I narrowed my options to Kong and Apache APISIX. Initially, I decided to explore Kong, and while the experience was smooth, I discovered that its open-source version lacked certain critical features. This led me to Apache APISIX, which appeared promising in terms of functionality and flexibility. 
 
@@ -10,7 +10,7 @@ Thanks to that video, I finally succeeded in setting up Apache APISIX and its da
 
 ---
 
-### **Installing Apache APISIX with Docker Compose**
+#### **Installing Apache APISIX with Docker Compose**
 
 Now that you have an idea of my journey, here’s how you can set up Apache APISIX along with the dashboard using Docker Compose:
 
