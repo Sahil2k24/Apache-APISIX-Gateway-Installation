@@ -84,6 +84,23 @@ Create the necessary configuration files for Apache APISIX and the Dashboard:
 Create a directory called `apisix_conf` and add the following `config.yaml`:
 
 ```yaml
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 apisix:
   node_listen: 9080              # APISIX listening port
   enable_ipv6: false
@@ -95,28 +112,30 @@ apisix:
 
 deployment:
   admin:
-    allow_admin:
+    allow_admin:               # https://nginx.org/en/docs/http/ngx_http_access_module.html#allow
       - 0.0.0.0/0              # We need to restrict ip access rules for security. 0.0.0.0/0 is for test.
 
     admin_key:
       - name: "admin"
         key: edd1c9f034335f136f87ad84b625c8f1
-        role: admin
+        role: admin                 # admin: manage all configuration data
+
       - name: "viewer"
         key: 4054f7cf07e344346cd3f287985e76a2
         role: viewer
 
   etcd:
-    host:
-      - "http://etcd:2379"
-    prefix: "/apisix"
-    timeout: 30
+    host:                           # it's possible to define multiple etcd hosts addresses of the same etcd cluster.
+      - "http://etcd:2379"          # multiple etcd address
+    prefix: "/apisix"               # apisix configurations prefix
+    timeout: 30                     # 30 seconds
 
 plugin_attr:
   prometheus:
     export_addr:
       ip: "0.0.0.0"
       port: 9091
+
 ```
 
 - **`dashboard_conf/conf.yaml`**
@@ -126,62 +145,100 @@ Create a directory called `dashboard_conf` and add the following `conf.yaml`:
 ```yaml
 conf:
   listen:
-    host: 0.0.0.0
-    port: 9000
-  allow_list:
+    host: 0.0.0.0     # `manager api` listening ip or host name
+    port: 9000          # `manager api` listening port
+  allow_list:           # If we don't set any IP list, then any IP access is allowed by default.
     - 0.0.0.0/0
   etcd:
-    endpoints:
+    endpoints:          # supports defining multiple etcd host addresses for an etcd cluster
       - "http://etcd:2379"
+                          # yamllint disable rule:comments-indentation
+                          # etcd basic auth info
+    # username: "root"    # ignore etcd username if not enable etcd auth
+    # password: "123456"  # ignore etcd password if not enable etcd auth
     mtls:
-      key_file: ""
-      cert_file: ""
-      ca_file: ""
+      key_file: ""          # Path of your self-signed client side key
+      cert_file: ""         # Path of your self-signed client side cert
+      ca_file: ""           # Path of your self-signed ca cert, the CA is used to sign callers' certificates
+    # prefix: /apisix     # apisix config's prefix in etcd, /apisix by default
   log:
     error_log:
-      level: warn
+      level: warn       # supports levels, lower to higher: debug, info, warn, error, panic, fatal
       file_path:
-        logs/error.log
+        logs/error.log  # supports relative path, absolute path, standard output
+                        # such as: logs/error.log, /tmp/logs/error.log, /dev/stdout, /dev/stderr
     access_log:
       file_path:
-        logs/access.log
+        logs/access.log  # supports relative path, absolute path, standard output
+                         # such as: logs/access.log, /tmp/logs/access.log, /dev/stdout, /dev/stderr
+                         # log example: 2020-12-09T16:38:09.039+0800	INFO	filter/logging.go:46	/apisix/admin/routes/r1	{"status": 401, "host": "127.0.0.1:9000", "query": "asdfsafd=adf&a=a", "requestId": "3d50ecb8-758c-46d1-af5b-cd9d1c820156", "latency": 0, "remoteIP": "127.0.0.1", "method": "PUT", "errs": []}
   security:
-    content_security_policy: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-src *"
+      # access_control_allow_origin: "http://httpbin.org"
+      # access_control_allow_credentials: true          # support using custom cors configration
+      # access_control_allow_headers: "Authorization"
+      # access_control-allow_methods: "*"
+      # x_frame_options: "deny"
+      content_security_policy: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-src *"  # You can set frame-src to provide content for your grafana panel.
+
 authentication:
-  secret: secret
-  expire_time: 3600
-  users:
-    - username: admin
+  secret:
+    secret              # secret for jwt token generation.
+                        # NOTE: Highly recommended to modify this value to protect `manager api`.
+                        # if it's default value, when `manager api` start, it will generate a random string to replace it.
+  expire_time: 3600     # jwt token expire time, in second
+  users:                # yamllint enable rule:comments-indentation
+    - username: admin   # username and password for login `manager api`
       password: admin
     - username: user
       password: user
 
-plugins:
+plugins:                          # plugin list (sorted in alphabetical order)
   - api-breaker
   - authz-keycloak
   - basic-auth
   - batch-requests
   - consumer-restriction
   - cors
+  # - dubbo-proxy
   - echo
+  # - error-log-logger
+  # - example-plugin
   - fault-injection
   - grpc-transcode
   - hmac-auth
   - http-logger
   - ip-restriction
   - jwt-auth
+  - kafka-logger
   - key-auth
   - limit-conn
   - limit-count
   - limit-req
+  # - log-rotate
+  # - node-status
+  - openid-connect
   - prometheus
   - proxy-cache
+  - proxy-mirror
   - proxy-rewrite
   - redirect
+  - referer-restriction
   - request-id
   - request-validation
   - response-rewrite
+  - serverless-post-function
+  - serverless-pre-function
+  # - skywalking
+  - sls-logger
+  - syslog
+  - tcp-logger
+  - udp-logger
+  - uri-blocker
+  - wolf-rbac
+  - zipkin
+  - server-info
   - traffic-split
+
 ```
 
 #### 3. **Edit the `docker-compose.yml`**
@@ -196,9 +253,9 @@ services:
     image: apache/apisix-dashboard:3.0.0-alpine
     restart: always
     volumes:
-      - ./dashboard_conf/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
+    - ./dashboard_conf/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
     ports:
-      - "9000:9000"
+    - "9000:9000"
     networks:
       apisix:
 
@@ -209,6 +266,7 @@ services:
       - ./apisix_conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
     depends_on:
       - etcd
+    ##network_mode: host
     ports:
       - "9180:9180/tcp"
       - "9080:9080/tcp"
@@ -240,6 +298,8 @@ services:
       - ./upstream/web1.conf:/etc/nginx/nginx.conf
     ports:
       - "9081:80/tcp"
+    environment:
+      - NGINX_PORT=80
     networks:
       apisix:
 
@@ -250,6 +310,8 @@ services:
       - ./upstream/web2.conf:/etc/nginx/nginx.conf
     ports:
       - "9082:80/tcp"
+    environment:
+      - NGINX_PORT=80
     networks:
       apisix:
 
@@ -259,19 +321,22 @@ services:
     volumes:
       - ./prometheus_conf/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - "9090:9090
-
-"
+      - "9090:9090"
     networks:
       apisix:
 
   grafana:
-    image: grafana/grafana:7.3.1
+    image: grafana/grafana:7.3.7
     restart: always
     ports:
       - "3000:3000"
+    volumes:
+      - "./grafana_conf/provisioning:/etc/grafana/provisioning"
+      - "./grafana_conf/dashboards:/var/lib/grafana/dashboards"
+      - "./grafana_conf/config/grafana.ini:/etc/grafana/grafana.ini"
     networks:
       apisix:
+
 
 networks:
   apisix:
@@ -279,6 +344,8 @@ networks:
 
 volumes:
   etcd_data:
+    driver: local
+
 ```
 
 #### 4. **Start the Docker Compose Setup**
