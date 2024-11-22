@@ -316,3 +316,5 @@ Use the credentials you configured in the `conf.yaml` file (`username: admin`, `
 ### **Conclusion**
 
 By following these steps, you should be able to set up Apache APISIX with Docker and run the dashboard successfully. The key issue I faced—“etcd not connected”—was resolved thanks to the insights from the YouTube tutorial, and I hope this guide helps you avoid the frustration I encountered.
+
+<img width="960" alt="Dashboard" src="https://github.com/user-attachments/assets/cb7b408a-6266-4e1f-a881-47c305020002">
