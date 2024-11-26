@@ -29,7 +29,7 @@ services:
       apisix:
 
   etcd:
-    image: bitnami/etcd:3.4.15
+    image: bitnami/etcd:3.5.11
     restart: always
     volumes:
       - etcd_data:/bitnami/etcd
